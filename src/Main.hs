@@ -5,6 +5,9 @@ module Main where
 
 import           Control.DeepSeq                  (force)
 import           Control.Exception                (evaluate)
+import           Control.Monad                    (replicateM)
+import           Data.List                        (minimumBy)
+import           Data.Ord                         (comparing)
 import qualified Data.Text                        as T
 import qualified Data.Vector.Unboxed              as V
 import           GHC.Base                         (String)
@@ -97,9 +100,16 @@ percDiff x y = (abs (x - y) / ((x + y) / 2)) * 100
 
 cmpPerf :: Args -> IO ()
 cmpPerf (Args old new forks) = do
-  oldSamples <- execProc $ T.unpack old
-  newSamples <- execProc $ T.unpack new
-  print $ calcDiff oldSamples newSamples
+  listOfOldSamples <- replicateM forks $ do
+    putStrLn ("Gathering metrics for: " <> T.unpack old)
+    execProc $ T.unpack old
+  listOfNewSamples <- replicateM forks $ do
+    putStrLn ("Gathering metrics for: " <> T.unpack new)
+    execProc $ T.unpack new
+  let
+    bestOldSamples = minimumBy (comparing S.mean) listOfOldSamples
+    bestNewSamples = minimumBy (comparing S.mean) listOfNewSamples
+  print $ calcDiff bestOldSamples bestNewSamples
 
 
 main :: IO ()
