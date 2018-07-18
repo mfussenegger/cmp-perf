@@ -27,6 +27,7 @@ import           System.Process                   (CreateProcess (..),
                                                    StdStream (..), shell,
                                                    waitForProcess,
                                                    withCreateProcess)
+import           Text.Printf                      (printf)
 
 
 type Samples = V.Vector Double
@@ -109,7 +110,11 @@ cmpPerf (Args old new forks) = do
   let
     bestOldSamples = minimumBy (comparing S.mean) listOfOldSamples
     bestNewSamples = minimumBy (comparing S.mean) listOfNewSamples
-  print $ calcDiff bestOldSamples bestNewSamples
+    diff = calcDiff bestOldSamples bestNewSamples
+  printf   "%.2f%% mean difference\n" (meanPct diff)
+  putStrLn " Cmd |       Mean |        Min |        Max |"
+  printf   " Old | %10.3f | %10.3f | %10.3f |\n" (oldMean diff) (oldMin diff) (oldMax diff)
+  printf   " New | %10.3f | %10.3f | %10.3f |\n" (newMean diff) (newMin diff) (newMax diff)
 
 
 main :: IO ()
